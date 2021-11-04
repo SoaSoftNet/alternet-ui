@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
+    <TargetFrameworks>net46;netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="!$([MSBuild]::IsOsPlatform('Windows'))">
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Alternet.UI.Build.Tasks.ApiInfoCollector\**" />
+    <EmbeddedResource Remove="Alternet.UI.Build.Tasks.ApiInfoCollector\**" />
+    <None Remove="Alternet.UI.Build.Tasks.ApiInfoCollector\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Framework" Version="15.9.20" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.9.20" PrivateAssets="all" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+
+  <Target Name="EmbedWellKnownApiInfo" BeforeTargets="PrepareForBuild" Condition="'$(TargetFramework)' != ''">
+    <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
+      <ApiInfoCollectorTargetFramework>net45</ApiInfoCollectorTargetFramework>
+    </PropertyGroup>
+    <PropertyGroup Condition="!$([MSBuild]::IsOsPlatform('Windows'))">
+      <ApiInfoCollectorTargetFramework>netcoreapp3.1</ApiInfoCollectorTargetFramework>
+    </PropertyGroup>
+    
+    <PropertyGroup>
+      <ApiInfoXmlFilePath>$(IntermediateOutputPath)\WellKnownApiInfo.xml</ApiInfoXmlFilePath>
+      <ApiInfoCollectorToolPath>$(MSBuildThisFileDirectory)\Alternet.UI.Build.Tasks.ApiInfoCollector\bin\$(Configuration)\$(ApiInfoCollectorTargetFramework)\Alternet.UI.Build.Tasks.ApiInfoCollector</ApiInfoCollectorToolPath>
+      <ApiInfoCollectorInputAssemblyPath>$(MSBuildThisFileDirectory)\..\Alternet.UI\bin\$(Configuration)\$(ApiInfoCollectorTargetFramework)\Alternet.UI.dll</ApiInfoCollectorInputAssemblyPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
+      <ApiInfoCollectorCommand>$(ApiInfoCollectorToolPath) $(ApiInfoCollectorInputAssemblyPath) $(ApiInfoXmlFilePath)</ApiInfoCollectorCommand>
+    </PropertyGroup>
+    <PropertyGroup Condition="!$([MSBuild]::IsOsPlatform('Windows'))">
+      <ApiInfoCollectorCommand>dotnet $(ApiInfoCollectorToolPath).dll $(ApiInfoCollectorInputAssemblyPath) $(ApiInfoXmlFilePath)</ApiInfoCollectorCommand>
+    </PropertyGroup>
+
+    <Exec Command="$(ApiInfoCollectorCommand)" />
+
+    <ItemGroup>
+      <EmbeddedResource Include="$(ApiInfoXmlFilePath)" LogicalName="WellKnownApiInfo.xml" />
+      <FileWrites Include="$(ApiInfoXmlFilePath)" />
+    </ItemGroup>
+  </Target>
+</Project>

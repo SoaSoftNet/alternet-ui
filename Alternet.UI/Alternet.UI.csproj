@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\Version\Version.props" />
+  <PropertyGroup>
+    <Platforms>AnyCPU</Platforms>
+    <LangVersion>latest</LangVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Keys\Key.snk</AssemblyOriginatorKeyFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <DefineConstants>$(DefineConstants);XAMLX_INTERNAL</DefineConstants>
+    <PackageId>Alternet.UI</PackageId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>AlterNET UI: a cross-platform graphical user interface framework.</Description>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageLicenseFile>License.txt</PackageLicenseFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\Docs\Package\readme.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Licenses\License.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
+    <DefineConstants>$(DefineConstants);FEATURE_WINDOWS_SYSTEM_COLORS</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
+    <TargetFrameworks>net45;netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::IsOsPlatform('Windows'))">
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="build\**" />
+    <EmbeddedResource Remove="build\**" />
+    <None Remove="build\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Keys\Key.snk" Link="Key.snk" />
+  </ItemGroup>
+  <!-- Uncomment this to debug in release build. -->
+  <!-- <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+  </PropertyGroup> -->
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="Nullable" Version="1.2.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="$(DefineConstants.Contains(';NETCOREAPP'))">
+    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Alternet.UI.Pal" Version="0.1.68-beta">
+      <PrivateAssets>None</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="$(DefineConstants.Contains(';NETCOREAPP'))">
+    <PackageReference Include="System.Runtime">
+      <Version>4.3.1</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup Condition="$(DefineConstants.Contains(';NETFRAMEWORK'))">
+    <Reference Include="System.Runtime" />
+    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Alternet.UI.Build.Tasks\msbuild\Alternet.UI.Build.props" Visible="false" Pack="True" PackagePath="build" />
+    <None Include="..\Alternet.UI.Build.Tasks\msbuild\Alternet.UI.Build.targets" Visible="false" Pack="True" PackagePath="build" />
+    <None Include="..\Alternet.UI.Build.Tasks\msbuild\UIXml.xml" Visible="false" Pack="True" PackagePath="build" />
+    <None Include="build\Alternet.UI.props" Visible="false" Pack="True" PackagePath="build" />
+    <None Include="build\Alternet.UI.targets" Visible="false" Pack="True" PackagePath="build" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)'=='Release'">
+    <None Include="..\Alternet.UI.Build.Tasks\bin\Release\netcoreapp3.1\Alternet.UI.Build.Tasks.dll" Visible="false" Pack="True" PackagePath="tools\netcoreapp3.1" />
+    <None Include="..\Alternet.UI.Build.Tasks\bin\Release\net46\Alternet.UI.Build.Tasks.dll" Visible="false" Pack="True" PackagePath="tools\net46" />
+  </ItemGroup>
+</Project>
