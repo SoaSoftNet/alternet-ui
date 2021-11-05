@@ -17,9 +17,11 @@
     <PackageLicenseFile>License.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\Docs\Package\readme.md" Pack="true" PackagePath="" />
+    <None Include="Package\readme.md" Pack="true" PackagePath="" />
+    <None Include="Package\icon.png" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Licenses\License.txt" Pack="true" PackagePath="" />
@@ -59,7 +61,7 @@
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Alternet.UI.Pal" Version="0.1.80-beta">
+    <PackageReference Include="Alternet.UI.Pal" Version="0.1.84-beta">
       <PrivateAssets>None</PrivateAssets>
     </PackageReference>
   </ItemGroup>
