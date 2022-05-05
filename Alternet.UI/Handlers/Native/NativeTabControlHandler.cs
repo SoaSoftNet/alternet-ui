@@ -19,16 +19,27 @@ namespace Alternet.UI
             Control.Pages.ItemRemoved += Pages_ItemRemoved;
 
             NativeControl.SelectedPageIndexChanged += NativeControl_SelectedPageIndexChanged;
+            Control.SelectedPageChanged += Control_SelectedPageChanged;
+        }
+
+        private void Control_SelectedPageChanged(object sender, RoutedEventArgs e)
+        {
+            var index = Control.SelectedPage == null ? -1 : Control.Pages.IndexOf(Control.SelectedPage);
+            NativeControl.SelectedPageIndex = index;
         }
 
         private void NativeControl_SelectedPageIndexChanged(object? sender, EventArgs e)
         {
+            var selectedPageIndex = NativeControl.SelectedPageIndex;
+            Control.SelectedPage = selectedPageIndex == -1 ? null : Control.Pages[selectedPageIndex];
+            
             LayoutSelectedPage();
         }
 
         protected override void OnDetach()
         {
             NativeControl.SelectedPageIndexChanged -= NativeControl_SelectedPageIndexChanged;
+            Control.SelectedPageChanged -= Control_SelectedPageChanged;
 
             Control.Pages.ItemInserted -= Pages_ItemInserted;
             Control.Pages.ItemRemoved -= Pages_ItemRemoved;
@@ -97,7 +108,7 @@ namespace Alternet.UI
             OnPageRemoved(e.Index, e.Item);
         }
 
-        public override SizeF GetPreferredSize(SizeF availableSize)
+        public override Size GetPreferredSize(Size availableSize)
         {
             return NativeControl.GetTotalPreferredSizeFromPageSize(GetChildrenMaxPreferredSize(availableSize));
         }

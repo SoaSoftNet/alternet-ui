@@ -22,7 +22,24 @@ namespace Alternet.UI
     /// </remarks>
     public class Slider : Control
     {
-        private int value;
+        /// <summary>
+        /// Identifies the <see cref="Value"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty ValueProperty =
+            DependencyProperty.Register(
+                    "Value", // Property name
+                    typeof(int), // Property type
+                    typeof(Slider), // Property owner
+                    new FrameworkPropertyMetadata( // Property metadata
+                            0, // default value
+                            FrameworkPropertyMetadataOptions.BindsTwoWayByDefault | // Flags
+                                FrameworkPropertyMetadataOptions.AffectsPaint,
+                            new PropertyChangedCallback(OnValuePropertyChanged),    // property changed callback
+                            new CoerceValueCallback(CoerceValue),
+                            true, // IsAnimationProhibited
+                            UpdateSourceTrigger.PropertyChanged
+                            //UpdateSourceTrigger.LostFocus   // DefaultUpdateSourceTrigger
+                            ));
 
         private int minimum;
 
@@ -71,30 +88,10 @@ namespace Alternet.UI
         /// </summary>
         /// <value>A numeric value that is within the <see cref="Minimum"/> and <see cref="Maximum"/> range. The default value is 0.</value>
         /// <remarks>The <see cref="Value"/> property contains the number that represents the current position of the scroll box on the slider.</remarks>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// The value specified is greater than the value of the <see cref="Maximum"/> property or the value specified is less than the value of the <see cref="Minimum"/> property.
-        /// </exception>
         public int Value
         {
-            get
-            {
-                CheckDisposed();
-                return value;
-            }
-
-            set
-            {
-                CheckDisposed();
-
-                if (value < Minimum || value > Maximum)
-                    throw new ArgumentOutOfRangeException(nameof(value));
-
-                if (this.value == value)
-                    return;
-
-                this.value = value;
-                RaiseValueChanged(EventArgs.Empty);
-            }
+            get { return (int)GetValue(ValueProperty); }
+            set { SetValue(ValueProperty, value); }
         }
 
         /// <summary>
@@ -269,6 +266,34 @@ namespace Alternet.UI
         /// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
         protected virtual void OnValueChanged(EventArgs e)
         {
+        }
+
+        /// <summary>
+        /// Callback for changes to the Value property
+        /// </summary>
+        private static void OnValuePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            Slider control = (Slider)d;
+            control.OnValuePropertyChanged((int)e.OldValue, (int)e.NewValue);
+        }
+
+        private static object CoerceValue(DependencyObject d, object value)
+        {
+            var o = (Slider)d;
+
+            var intValue = (int)value;
+            if (intValue < o.Minimum)
+                return o.Minimum;
+
+            if (intValue > o.Maximum)
+                return o.Maximum;
+
+            return value;
+        }
+
+        private void OnValuePropertyChanged(int oldValue, int newValue)
+        {
+            RaiseValueChanged(EventArgs.Empty);
         }
     }
 }

@@ -7,11 +7,27 @@ namespace Alternet.UI.Native
     internal static class NativeApiTypes
     {
         [StructLayout(LayoutKind.Sequential)]
-        public struct Size
+        public struct Int32Size
         {
             public int Width, Height;
 
-            public Size(int width, int height)
+            public Int32Size(int width, int height)
+            {
+                Width = width;
+                Height = height;
+            }
+
+            public static implicit operator Drawing.Int32Size(Int32Size v) => new Drawing.Int32Size(v.Width, v.Height);
+
+            public static implicit operator Int32Size(Drawing.Int32Size v) => new Int32Size(v.Width, v.Height);
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Size
+        {
+            public double Width, Height;
+
+            public Size(double width, double height)
             {
                 Width = width;
                 Height = height;
@@ -23,27 +39,27 @@ namespace Alternet.UI.Native
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct SizeF
+        public struct Int32Point
         {
-            public float Width, Height;
+            public int X, Y;
 
-            public SizeF(float width, float height)
+            public Int32Point(int x, int y)
             {
-                Width = width;
-                Height = height;
+                X = x;
+                Y = y;
             }
 
-            public static implicit operator Drawing.SizeF(SizeF v) => new Drawing.SizeF(v.Width, v.Height);
+            public static implicit operator Drawing.Int32Point(Int32Point v) => new Drawing.Int32Point(v.X, v.Y);
 
-            public static implicit operator SizeF(Drawing.SizeF v) => new SizeF(v.Width, v.Height);
+            public static implicit operator Int32Point(Drawing.Int32Point v) => new Int32Point(v.X, v.Y);
         }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct Point
         {
-            public int X, Y;
+            public double X, Y;
 
-            public Point(int x, int y)
+            public Point(double x, double y)
             {
                 X = x;
                 Y = y;
@@ -55,27 +71,11 @@ namespace Alternet.UI.Native
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct PointF
-        {
-            public float X, Y;
-
-            public PointF(float x, float y)
-            {
-                X = x;
-                Y = y;
-            }
-
-            public static implicit operator Drawing.PointF(PointF v) => new Drawing.PointF(v.X, v.Y);
-
-            public static implicit operator PointF(Drawing.PointF v) => new PointF(v.X, v.Y);
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct Rectangle
+        public struct Int32Rect
         {
             public int X, Y, Width, Height;
 
-            public Rectangle(int x, int y, int width, int height)
+            public Int32Rect(int x, int y, int width, int height)
             {
                 X = x;
                 Y = y;
@@ -83,17 +83,17 @@ namespace Alternet.UI.Native
                 Height = height;
             }
 
-            public static implicit operator Drawing.Rectangle(Rectangle v) => new Drawing.Rectangle(v.X, v.Y, v.Width, v.Height);
+            public static implicit operator Drawing.Int32Rect(Int32Rect v) => new Drawing.Int32Rect(v.X, v.Y, v.Width, v.Height);
 
-            public static implicit operator Rectangle(Drawing.Rectangle v) => new Rectangle(v.X, v.Y, v.Width, v.Height);
+            public static implicit operator Int32Rect(Drawing.Int32Rect v) => new Int32Rect(v.X, v.Y, v.Width, v.Height);
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct RectangleF
+        public struct Rect
         {
-            public float X, Y, Width, Height;
+            public double X, Y, Width, Height;
 
-            public RectangleF(float x, float y, float width, float height)
+            public Rect(double x, double y, double width, double height)
             {
                 X = x;
                 Y = y;
@@ -101,17 +101,17 @@ namespace Alternet.UI.Native
                 Height = height;
             }
 
-            public static implicit operator Drawing.RectangleF(RectangleF v) => new Drawing.RectangleF(v.X, v.Y, v.Width, v.Height);
+            public static implicit operator Drawing.Rect(Rect v) => new Drawing.Rect(v.X, v.Y, v.Width, v.Height);
 
-            public static implicit operator RectangleF(Drawing.RectangleF v) => new RectangleF(v.X, v.Y, v.Width, v.Height);
+            public static implicit operator Rect(Drawing.Rect v) => new Rect(v.X, v.Y, v.Width, v.Height);
         }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct Thickness
         {
-            public float Left, Top, Right, Bottom;
+            public double Left, Top, Right, Bottom;
 
-            public Thickness(float left, float top, float right, float bottom)
+            public Thickness(double left, double top, double right, double bottom)
             {
                 Left = left;
                 Top = top;

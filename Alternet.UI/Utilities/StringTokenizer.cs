@@ -1,16 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Reflection.Emit;
-using XamlX.Ast;
-using XamlX.Emit;
-using XamlX.IL;
-using XamlX.Parsers;
-using XamlX.Transform;
-using XamlX.TypeSystem;
 
 namespace Alternet.UI
 {
@@ -108,21 +97,21 @@ namespace Alternet.UI
             return result;
         }
 
-        public bool TryReadSingle(out float result, char? separator = null)
+        public bool TryReadSingle(out double result, char? separator = null)
         {
             if (TryReadString(out var stringResult, separator) &&
-                float.TryParse(stringResult, NumberStyles.Float, _formatProvider, out result))
+                double.TryParse(stringResult, NumberStyles.Float, _formatProvider, out result))
             {
                 return true;
             }
             else
             {
-                result = default(float);
+                result = default(double);
                 return false;
             }
         }
 
-        public float ReadSingle(char? separator = null)
+        public double ReadSingle(char? separator = null)
         {
             if (!TryReadSingle(out var result, separator))
             {

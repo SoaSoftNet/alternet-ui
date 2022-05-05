@@ -14,21 +14,21 @@ namespace Alternet.UI
 
             public class AlignedPosition
             {
-                public AlignedPosition(float origin, float size)
+                public AlignedPosition(double origin, double size)
                 {
                     Origin = origin;
                     Size = size;
                 }
 
-                public float Origin { get; }
-                public float Size { get; }
+                public double Origin { get; }
+                public double Size { get; }
             }
 
             public StackPanel Control { get; }
             public StackPanelHandler Handler { get; }
 
             public abstract void Layout();
-            public abstract SizeF GetPreferredSize(SizeF availableSize);
+            public abstract Size GetPreferredSize(Size availableSize);
         }
     }
 }

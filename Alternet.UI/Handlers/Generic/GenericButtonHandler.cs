@@ -24,7 +24,7 @@ namespace Alternet.UI
             }
         }
 
-        public override SizeF GetPreferredSize(SizeF availableSize)
+        public override Size GetPreferredSize(Size availableSize)
         {
             return base.GetPreferredSize(availableSize);
         }
@@ -141,7 +141,7 @@ namespace Alternet.UI
                 throw new InvalidOperationException();
 
             label.Text = Control.Text;
-            Update();
+            Invalidate();
         }
     }
 }

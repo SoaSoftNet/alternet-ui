@@ -11,11 +11,11 @@ namespace Alternet.UI
     /// Defines the base class for controls, which are components with visual representation.
     /// </summary>
     [System.ComponentModel.DesignerCategory("Code")]
-    public class Control : Component, ISupportInitialize
+    public class Control : FrameworkElement, ISupportInitialize, IDisposable
     {
-        private static readonly SizeF DefaultSize = new SizeF(float.NaN, float.NaN);
+        private static readonly Size DefaultSize = new Size(double.NaN, double.NaN);
         private static Font? defaultFont;
-        private SizeF size = DefaultSize;
+        private Size size = DefaultSize;
         private Thickness margin;
         private Thickness padding;
         private ControlHandler? handler;
@@ -28,6 +28,9 @@ namespace Alternet.UI
 
         private bool visible = true;
         private bool enabled = true;
+        private Control? parent;
+
+        internal override bool HasLogicalChildren => Children.Count > 0;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Control"/> class.
@@ -37,6 +40,27 @@ namespace Alternet.UI
             Children.ItemInserted += Children_ItemInserted;
             Children.ItemRemoved += Children_ItemRemoved;
         }
+
+        /// <summary>
+        /// Captures the mouse to the control.
+        /// </summary>
+        public void CaptureMouse()
+        {
+            Handler.CaptureMouse();
+        }
+
+        /// <summary>
+        /// Releases the mouse capture, if the control held the capture.
+        /// </summary>
+        public void ReleaseMouseCapture()
+        {
+            Handler.ReleaseMouseCapture();
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the mouse is captured to this control.
+        /// </summary>
+        public bool IsMouseCaptured => Handler.IsMouseCaptured;
 
         /// <summary>
         /// Occurs when the control is clicked.
@@ -70,6 +94,31 @@ namespace Alternet.UI
         /// Occurs when the value of the <see cref="Visible"/> property changes.
         /// </summary>
         public event EventHandler? VisibleChanged;
+
+        /// <summary>
+        /// Occurs when the control loses mouse capture.
+        /// </summary>
+        /// <remarks>
+        /// In rare scenarios, you might need to detect unexpected input. For example, consider the following scenarios.
+        /// <list type="bullet">
+        /// <item>During a mouse operation, the user opens the Start menu by pressing the Windows key or CTRL+ESC.</item>
+        /// <item>During a mouse operation, the user switches to another program by pressing ALT+TAB.</item>
+        /// <item>During a mouse operation, another program displays a window or a message box that takes focus away from the current application.</item>
+        /// </list>
+        /// Mouse operations can include clicking and holding the mouse on a form or a control, or performing a mouse drag operation.
+        /// If you have to detect when a form or a control loses mouse capture for these and related unexpected scenarios, you can use the <see cref="MouseCaptureLost"/> event.
+        /// </remarks>
+        public event EventHandler? MouseCaptureLost;
+
+        /// <summary>
+        /// Occurs when the mouse pointer enters the control.
+        /// </summary>
+        public event EventHandler? MouseEnter;
+
+        /// <summary>
+        /// Occurs when the mouse pointer leaves the control.
+        /// </summary>
+        public event EventHandler? MouseLeave;
 
         /// <summary>
         /// Occurs when the value of the <see cref="Enabled"/> property changes.
@@ -121,12 +170,13 @@ namespace Alternet.UI
         public object? Tag { get; set; }
 
         /// <summary>
-        /// Gets or sets the identifying name of the control.
-        /// The name provides a reference so that code-behind, such as event handler code,
-        /// can refer to a markup control after it is constructed during processing by a UIXML processor.
+        /// Gets or sets the <see cref="Control"/> bounds relative to the parent, in device-independent units (1/96th inch per unit).
         /// </summary>
-        /// <value>The name of the control. The default is <c>null</c>.</value>
-        public string? Name { get; set; } // todo: maybe use Site.Name?
+        public virtual Rect Bounds
+        {
+            get => Handler.Bounds;
+            set => Handler.Bounds = value;
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether the control and all its child controls are displayed.
@@ -187,6 +237,11 @@ namespace Alternet.UI
             }
         }
 
+        internal static void OnVisualStatePropertyChanged(Control control, DependencyPropertyChangedEventArgs e)
+        {
+            throw new NotImplementedException(); // yezo
+        }
+
         /// <summary>
         /// Gets a <see cref="ControlHandler"/> associated with this class.
         /// </summary>
@@ -223,20 +278,30 @@ namespace Alternet.UI
         /// <summary>
         /// Gets the parent container of the control.
         /// </summary>
-        public Control? Parent { get; internal set; } // todo: allow users to set the Parent property?
+        public new Control? Parent
+        {
+            get => parent;
+            internal set
+            {
+                var oldParent = parent;
+                parent = value;
+                base.Parent = value;
+                base.ChangeLogicalParent(oldParent, parent);
+            }
+        } // todo: allow users to set the Parent property?
 
         /// <summary>
         /// Gets or sets the suggested size of the control.
         /// </summary>
         /// <value>The suggested size of the control, in device-independent units (1/96th inch per unit).
-        /// The default value is <see cref="SizeF"/>(<see cref="float.NaN"/>, <see cref="float.NaN"/>)/>.
+        /// The default value is <see cref="Drawing.Size"/>(<see cref="double.NaN"/>, <see cref="double.NaN"/>)/>.
         /// </value>
         /// <remarks>
         /// This property specifies the suggested size of the control. An actual size is calculated by the layout system.
-        /// Set this property to <see cref="SizeF"/>(<see cref="float.NaN"/>, <see cref="float.NaN"/>) to specify auto sizing behavior.
+        /// Set this property to <see cref="Drawing.Size"/>(<see cref="double.NaN"/>, <see cref="double.NaN"/>) to specify auto sizing behavior.
         /// The value of this property is always the same as the value that was set to it and is not changed by the layout system.
         /// </remarks>
-        public virtual SizeF Size
+        public virtual Size Size
         {
             get
             {
@@ -256,20 +321,20 @@ namespace Alternet.UI
         /// Gets or sets the suggested width of the control.
         /// </summary>
         /// <value>The suggested width of the control, in device-independent units (1/96th inch per unit).
-        /// The default value is <see cref="float.NaN"/>.
+        /// The default value is <see cref="double.NaN"/>.
         /// </value>
         /// <remarks>
         /// This property specifies the suggested width of the control. An actual width is calculated by the layout system.
-        /// Set this property to <see cref="float.NaN"/> to specify auto sizing behavior.
+        /// Set this property to <see cref="double.NaN"/> to specify auto sizing behavior.
         /// The value of this property is always the same as the value that was set to it and is not changed by the layout system.
         /// </remarks>
-        public virtual float Width
+        public virtual double Width
         {
             get => size.Width;
 
             set
             {
-                Size = new SizeF(value, Size.Height);
+                Size = new Size(value, Size.Height);
             }
         }
 
@@ -277,20 +342,20 @@ namespace Alternet.UI
         /// Gets or sets the suggested height of the control.
         /// </summary>
         /// <value>The suggested height of the control, in device-independent units (1/96th inch per unit).
-        /// The default value is <see cref="float.NaN"/>.
+        /// The default value is <see cref="double.NaN"/>.
         /// </value>
         /// <remarks>
         /// This property specifies the suggested height of the control. An actual height is calculated by the layout system.
-        /// Set this property to <see cref="float.NaN"/> to specify auto sizing behavior.
+        /// Set this property to <see cref="double.NaN"/> to specify auto sizing behavior.
         /// The value of this property is always the same as the value that was set to it and is not changed by the layout system.
         /// </remarks>
-        public virtual float Height
+        public virtual double Height
         {
             get => size.Height;
 
             set
             {
-                Size = new SizeF(Size.Width, value);
+                Size = new Size(Size.Width, value);
             }
         }
 
@@ -299,7 +364,11 @@ namespace Alternet.UI
         /// </summary>
         /// <value>If <c>true</c>, the control paints itself rather than the operating system doing so.
         /// If <c>false</c>, the <see cref="Paint"/> event is not raised.</value>
-        public bool UserPaint { get; set; } // todo: rethink design of this
+        public bool UserPaint
+        {
+            get => Handler.UserPaint;
+            set => Handler.UserPaint = value;
+        }
 
         /// <summary>
         /// Gets or sets the outer margin of an control.
@@ -433,11 +502,6 @@ namespace Alternet.UI
             }
         }
 
-        /// <summary>
-        /// Returns a collection of controls which can be treated as "logical children" of this control.
-        /// </summary>
-        protected virtual IEnumerable<Control> LogicalChildren => Children; // todo: consider changing this to Site.GetService()
-
         private IControlHandlerFactory? ControlHandlerFactory { get; set; }
 
         /// <summary>
@@ -452,29 +516,6 @@ namespace Alternet.UI
 
             OnClick(e);
             Click?.Invoke(this, e);
-        }
-
-        /// <summary>
-        /// Recursively searches all <see cref="LogicalChildren"/> for a control with the specified name, and returns that control if found.
-        /// </summary>
-        /// <param name="name">The name of the control to be found.</param>
-        /// <returns>The found control, or <c>null</c> if no control with the provided name is found.</returns>
-        public Control? TryFindControl(string name)
-        {
-            if (name is null)
-                throw new ArgumentNullException(nameof(name));
-
-            if (Name == name)
-                return this;
-
-            foreach (var child in LogicalChildren)
-            {
-                var result = child.TryFindControl(name);
-                if (result != null)
-                    return result;
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -496,21 +537,6 @@ namespace Alternet.UI
         public void Hide() => Visible = false;
 
         /// <summary>
-        /// Recursively searches all <see cref="LogicalChildren"/> for a control with the specified name,
-        /// and throws an exception if the requested control is not found.
-        /// </summary>
-        /// <param name="name">The name of the control to be found.</param>
-        /// <returns>The requested resource. If no control with the provided name was found, an exception is thrown.</returns>
-        /// <exception cref="InvalidOperationException">A control with the provided name was found.</exception>
-        public Control FindControl(string name)
-        {
-            if (name is null)
-                throw new ArgumentNullException(nameof(name));
-
-            return TryFindControl(name) ?? throw new InvalidOperationException($"Control with name '{name}' was not found.");
-        }
-
-        /// <summary>
         /// Creates the <see cref="DrawingContext"/> for the control.
         /// </summary>
         /// <returns>The <see cref="DrawingContext"/> for the control.</returns>
@@ -520,14 +546,29 @@ namespace Alternet.UI
         /// with that object will be erased with the next paint event. Therefore you cannot cache
         /// the <see cref="DrawingContext"/> object for reuse, except to use non-visual methods like <see cref="DrawingContext.MeasureText"/>.
         /// Instead, you must call <see cref="CreateDrawingContext"/> every time that you want to use the <see cref="DrawingContext"/> object,
-        /// and then call <see cref="Dispose"/> when you are finished using it.
+        /// and then call <see cref="Dispose()"/> when you are finished using it.
         /// </remarks>
         public DrawingContext CreateDrawingContext() => Handler.CreateDrawingContext();
 
         /// <summary>
-        /// Causes the control to redraw.
+        /// <inheritdoc />
         /// </summary>
-        public void Update() => Handler.Update(); // todo: consider Invalidate()
+        protected override IEnumerable<FrameworkElement> LogicalChildrenCollection => Children;
+
+        /// <summary>
+        /// Invalidates the control and causes a paint message to be sent to the control.
+        /// </summary>
+        public void Invalidate() => Handler.Invalidate();
+
+        /// <summary>
+        /// Causes the control to redraw the invalidated regions.
+        /// </summary>
+        public void Update() => Handler.Update();
+
+        /// <summary>
+        /// Forces the control to invalidate itself and immediately redraw itself and any child controls.
+        /// </summary>
+        public void Refresh() => Handler.Refresh();
 
         /// <summary>
         /// Temporarily suspends the layout logic for the control.
@@ -545,6 +586,44 @@ namespace Alternet.UI
         public void SuspendLayout()
         {
             Handler.SuspendLayout();
+        }
+
+        internal void RaiseMouseCaptureLost()
+        {
+            OnMouseCaptureLost();
+            MouseCaptureLost?.Invoke(this, EventArgs.Empty);
+        }
+
+        internal void RaiseMouseEnter()
+        {
+            OnMouseEnter();
+            MouseEnter?.Invoke(this, EventArgs.Empty);
+        }
+
+        internal void RaiseMouseLeave()
+        {
+            OnMouseLeave();
+            MouseLeave?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Converts the screen coordinates of a specified point on the screen to client-area coordinates.
+        /// </summary>
+        /// <param name="point">A <see cref="Point"/> that specifies the screen coordinates to be converted.</param>
+        /// <returns>The converted cooridnates.</returns>
+        public Point ScreenToClient(Point point)
+        {
+            return Handler.ScreenToClient(point);
+        }
+
+        /// <summary>
+        /// Converts the client-area coordinates of a specified point to screen coordinates.
+        /// </summary>
+        /// <param name="point">A <see cref="Point"/> that contains the client coordinates to be converted.</param>
+        /// <returns>The converted cooridnates.</returns>
+        public Point ClientToScreen(Point point)
+        {
+            return Handler.ClientToScreen(point);
         }
 
         /// <summary>
@@ -604,7 +683,26 @@ namespace Alternet.UI
         protected virtual void OnLayout()
         {
             Handler.OnLayout();
+            RaiseLayoutUpdated();
         }
+
+        /// <summary>
+        /// Called when a <see cref="Control"/> is inserted into the <see cref="Control.Children"/> or <see cref="ControlHandler.VisualChildren"/> collection.
+        /// </summary>
+        protected virtual void OnChildInserted(int childIndex, Control childControl)
+        {
+        }
+
+        /// <summary>
+        /// Called when a <see cref="Control"/> is removed from the <see cref="Control.Children"/> or <see cref="ControlHandler.VisualChildren"/> collections.
+        /// </summary>
+        protected virtual void OnChildRemoved(int childIndex, Control childControl)
+        {
+        }
+
+        internal void RaiseChildInserted(int childIndex, Control childControl) => OnChildInserted(childIndex, childControl);
+
+        internal void RaiseChildRemoved(int childIndex, Control childControl) => OnChildInserted(childIndex, childControl);
 
         internal void InvokeOnLayout()
         {
@@ -616,7 +714,7 @@ namespace Alternet.UI
         /// </summary>
         /// <param name="availableSize">The available space that a parent element can allocate a child control.</param>
         /// <returns>A <see cref="Size"/> representing the width and height of a rectangle, in device-independent units (1/96th inch per unit).</returns>
-        public virtual SizeF GetPreferredSize(SizeF availableSize)
+        public virtual Size GetPreferredSize(Size availableSize)
         {
             return Handler.GetPreferredSize(availableSize);
         }
@@ -632,6 +730,7 @@ namespace Alternet.UI
         public virtual void BeginInit()
         {
             SuspendLayout();
+            Handler.BeginInit();
         }
 
         /// <summary>
@@ -644,7 +743,18 @@ namespace Alternet.UI
         /// </remarks>
         public virtual void EndInit()
         {
+            Handler.EndInit();
             ResumeLayout();
+        }
+
+        /// <summary>
+        /// Sets input focus to the control.
+        /// </summary>
+        /// <returns><see langword="true"/> if the input focus request was successful; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>The <see cref="Focus"/> method returns true if the control successfully received input focus.</remarks>
+        public bool Focus()
+        {
+            return Handler.Focus();
         }
 
         internal void RaisePaint(PaintEventArgs e)
@@ -699,12 +809,35 @@ namespace Alternet.UI
         }
 
         /// <summary>
+        /// Called when the control loses mouse capture.
+        /// </summary>
+        protected virtual void OnMouseCaptureLost()
+        {
+        }
+
+        /// <summary>
+        /// Called when the mouse pointer enters the control.
+        /// </summary>
+        protected virtual void OnMouseEnter()
+        {
+        }
+
+        /// <summary>
+        /// Called when the mouse pointer leaves the control.
+        /// </summary>
+        protected virtual void OnMouseLeave()
+        {
+        }
+
+        /// <summary>
         /// Called when the value of the <see cref="Enabled"/> property changes.
         /// </summary>
         /// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
         protected virtual void OnEnabledChanged(EventArgs e)
         {
         }
+
+        private protected override bool GetIsEnabled() => Enabled;
 
         /// <summary>
         /// Forces the re-creation of the handler for the control.
@@ -718,7 +851,7 @@ namespace Alternet.UI
             if (handler != null)
                 DetachHandler();
 
-            Update();
+            Invalidate();
         }
 
         /// <summary>
@@ -748,10 +881,8 @@ namespace Alternet.UI
         /// Releases the unmanaged resources used by the object and optionally releases the managed resources.
         /// </summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
             if (!IsDisposed)
             {
                 if (disposing)
@@ -829,6 +960,15 @@ namespace Alternet.UI
         private void Children_ItemRemoved(object? sender, CollectionChangeEventArgs<Control> e)
         {
             e.Item.Parent = null;
+        }
+
+        /// <summary>
+        /// Releases all resources used by the object.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -32,7 +32,11 @@ namespace Alternet.UI.Native
             if (!instancesByNativePointers.TryGetValue(pointer, out var w))
             {
                 if (fromPointerFactory != null)
-                    return fromPointerFactory(pointer);
+                {
+                    var newObject = fromPointerFactory(pointer);
+                    AddRefNativeObjectPointer(pointer);
+                    return newObject;
+                }
                 else
                     return null;
             }
@@ -67,7 +71,7 @@ namespace Alternet.UI.Native
 
                 if (NativePointer != IntPtr.Zero)
                 {
-                    NativeApi.Object_Release(NativePointer);
+                    ReleaseNativeObjectPointer(NativePointer);
                     SetNativePointer(IntPtr.Zero);
                 }
 
@@ -81,10 +85,25 @@ namespace Alternet.UI.Native
                 throw new ObjectDisposedException(null);
         }
 
+        protected static void AddRefNativeObjectPointer(IntPtr value)
+        {
+            if (value != IntPtr.Zero)
+                NativeApi.Object_AddRef(value);
+        }
+
+        protected static void ReleaseNativeObjectPointer(IntPtr value)
+        {
+            if (value != IntPtr.Zero)
+                NativeApi.Object_Release(value);
+        }
+
         [SuppressUnmanagedCodeSecurity]
-        private class NativeApi : NativeApiProvider
+        class NativeApi : NativeApiProvider
         {
             static NativeApi() => Initialize();
+
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Object_AddRef(IntPtr obj);
 
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Object_Release(IntPtr obj);

@@ -1,9 +1,12 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Alternet.UI;
+using Alternet.UI.Markup;
 using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace Alternet.Drawing
 {
@@ -11,54 +14,101 @@ namespace Alternet.Drawing
     /// Represents an ordered pair of x and y coordinates that define a point in a two-dimensional plane.
     /// </summary>
     [Serializable]
-    //[TypeConverter("System.Drawing.PointConverter, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
     public struct Point : IEquatable<Point>
     {
         /// <summary>
         /// Creates a new instance of the <see cref='Drawing.Point'/> class with member data left uninitialized.
         /// </summary>
         public static readonly Point Empty;
-
-        private int x; // Do not rename (binary serialization)
-        private int y; // Do not rename (binary serialization)
+        private double x; // Do not rename (binary serialization)
+        private double y; // Do not rename (binary serialization)
 
         /// <summary>
         /// Initializes a new instance of the <see cref='Drawing.Point'/> class with the specified coordinates.
         /// </summary>
-        public Point(int x, int y)
+        public Point(double x, double y)
         {
             this.x = x;
             this.y = y;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref='Drawing.Point'/> class from a <see cref='Drawing.Size'/> .
+        /// Initializes a new instance of the <see cref='Drawing.Point'/> struct from the specified
+        /// <see cref="System.Numerics.Vector2"/>.
         /// </summary>
-        public Point(Size sz)
+        public Point(Vector2 vector)
         {
-            x = sz.Width;
-            y = sz.Height;
+            x = vector.X;
+            y = vector.Y;
         }
 
         /// <summary>
-        /// Initializes a new instance of the Point class using coordinates specified by an integer value.
+        /// Parse - returns an instance converted from the provided string using
+        /// the culture "en-US"
+        /// <param name="source"> string with Point data </param>
         /// </summary>
-        public Point(int dw)
+        public static Point Parse(string source)
         {
-            x = LowInt16(dw);
-            y = HighInt16(dw);
+            IFormatProvider formatProvider = TypeConverterHelper.InvariantEnglishUS;
+
+            TokenizerHelper th = new TokenizerHelper(source, formatProvider);
+
+            Point value;
+
+            String firstToken = th.NextTokenRequired();
+
+            value = new Point(
+                Convert.ToDouble(firstToken, formatProvider),
+                Convert.ToDouble(th.NextTokenRequired(), formatProvider));
+
+            // There should be no more tokens in this string.
+            th.LastTokenRequired();
+
+            return value;
         }
+
+        /// <summary>
+        /// Creates a string representation of this object based on the format string
+        /// and IFormatProvider passed in.
+        /// If the provider is null, the CurrentCulture is used.
+        /// See the documentation for IFormattable for more information.
+        /// </summary>
+        /// <returns>
+        /// A string representation of this object.
+        /// </returns>
+        internal string ConvertToString(string format, IFormatProvider provider)
+        {
+            // Helper to get the numeric list separator for a given culture.
+            char separator = TokenizerHelper.GetNumericListSeparator(provider);
+            return String.Format(provider,
+                                 "{1:" + format + "}{0}{2:" + format + "}",
+                                 separator,
+                                 X,
+                                 Y);
+        }
+
+        /* TODO: uncommment when Double System.Numerics is availble. See https://github.com/dotnet/runtime/issues/24168
+        /// <summary>
+        /// Creates a new <see cref="System.Numerics.Vector2"/> from this <see cref="System.Drawing.PointF"/>.
+        /// </summary>
+        public Vector2 ToVector2() => new Vector2(x, y);
+
+
+        /// <summary>
+        /// Converts the specified <see cref="Drawing.Point"/> to a <see cref="System.Numerics.Vector2"/>.
+        /// </summary>
+        public static explicit operator Vector2(Point point) => point.ToVector2();*/
 
         /// <summary>
         /// Gets a value indicating whether this <see cref='Drawing.Point'/> is empty.
         /// </summary>
         [Browsable(false)]
-        public readonly bool IsEmpty => x == 0 && y == 0;
+        public readonly bool IsEmpty => x == 0f && y == 0f;
 
         /// <summary>
         /// Gets the x-coordinate of this <see cref='Drawing.Point'/>.
         /// </summary>
-        public int X
+        public double X
         {
             readonly get => x;
             set => x = value;
@@ -67,21 +117,26 @@ namespace Alternet.Drawing
         /// <summary>
         /// Gets the y-coordinate of this <see cref='Drawing.Point'/>.
         /// </summary>
-        public int Y
+        public double Y
         {
             readonly get => y;
             set => y = value;
         }
 
         /// <summary>
-        /// Creates a <see cref='Drawing.PointF'/> with the coordinates of the specified <see cref='Drawing.Point'/>
+        /// Converts the specified <see cref="System.Numerics.Vector2"/> to a <see cref="Drawing.Point"/>.
         /// </summary>
-        public static implicit operator PointF(Point p) => new PointF(p.X, p.Y);
+        public static explicit operator Point(Vector2 vector) => new Point(vector);
 
         /// <summary>
-        /// Creates a <see cref='Drawing.Size'/> with the coordinates of the specified <see cref='Drawing.Point'/> .
+        /// Translates a <see cref='Drawing.Point'/> by a given <see cref='Drawing.Int32Size'/> .
         /// </summary>
-        public static explicit operator Size(Point p) => new Size(p.X, p.Y);
+        public static Point operator +(Point pt, Int32Size sz) => Add(pt, sz);
+
+        /// <summary>
+        /// Translates a <see cref='Drawing.Point'/> by the negative of a given <see cref='Drawing.Int32Size'/> .
+        /// </summary>
+        public static Point operator -(Point pt, Int32Size sz) => Subtract(pt, sz);
 
         /// <summary>
         /// Translates a <see cref='Drawing.Point'/> by a given <see cref='Drawing.Size'/> .
@@ -103,39 +158,35 @@ namespace Alternet.Drawing
         /// <summary>
         /// Compares two <see cref='Drawing.Point'/> objects. The result specifies whether the values of the
         /// <see cref='Drawing.Point.X'/> or <see cref='Drawing.Point.Y'/> properties of the two
-        /// <see cref='Drawing.Point'/>  objects are unequal.
+        /// <see cref='Drawing.Point'/> objects are unequal.
         /// </summary>
         public static bool operator !=(Point left, Point right) => !(left == right);
 
         /// <summary>
+        /// Translates a <see cref='Drawing.Point'/> by a given <see cref='Drawing.Int32Size'/> .
+        /// </summary>
+        public static Point Add(Point pt, Int32Size sz) => new Point(pt.X + sz.Width, pt.Y + sz.Height);
+
+        /// <summary>
+        /// Translates a <see cref='Drawing.Point'/> by the negative of a given <see cref='Drawing.Int32Size'/> .
+        /// </summary>
+        public static Point Subtract(Point pt, Int32Size sz) => new Point(pt.X - sz.Width, pt.Y - sz.Height);
+
+        /// <summary>
         /// Translates a <see cref='Drawing.Point'/> by a given <see cref='Drawing.Size'/> .
         /// </summary>
-        public static Point Add(Point pt, Size sz) => new Point(unchecked(pt.X + sz.Width), unchecked(pt.Y + sz.Height));
+        public static Point Add(Point pt, Size sz) => new Point(pt.X + sz.Width, pt.Y + sz.Height);
 
         /// <summary>
         /// Translates a <see cref='Drawing.Point'/> by the negative of a given <see cref='Drawing.Size'/> .
         /// </summary>
-        public static Point Subtract(Point pt, Size sz) => new Point(unchecked(pt.X - sz.Width), unchecked(pt.Y - sz.Height));
+        public static Point Subtract(Point pt, Size sz) => new Point(pt.X - sz.Width, pt.Y - sz.Height);
 
         /// <summary>
-        /// Converts a PointF to a Point by performing a ceiling operation on all the coordinates.
+        /// Determines whether the specified object is equal to the current object.
         /// </summary>
-        public static Point Ceiling(PointF value) => new Point(unchecked((int)Math.Ceiling(value.X)), unchecked((int)Math.Ceiling(value.Y)));
-
-        /// <summary>
-        /// Converts a PointF to a Point by performing a truncate operation on all the coordinates.
-        /// </summary>
-        public static Point Truncate(PointF value) => new Point(unchecked((int)value.X), unchecked((int)value.Y));
-
-        /// <summary>
-        /// Converts a PointF to a Point by performing a round operation on all the coordinates.
-        /// </summary>
-        public static Point Round(PointF value) => new Point(unchecked((int)Math.Round(value.X)), unchecked((int)Math.Round(value.Y)));
-
-        /// <summary>
-        /// Specifies whether this <see cref='Drawing.Point'/> contains the same coordinates as the specified
-        /// <see cref='object'/>.
-        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns><c>true</c> if the specified object is equal to the current object; otherwise, <c>false</c>.</returns>
         public override readonly bool Equals([NotNullWhen(true)] object? obj) => obj is Point && Equals((Point)obj);
 
         /// <summary>
@@ -146,34 +197,15 @@ namespace Alternet.Drawing
         public readonly bool Equals(Point other) => this == other;
 
         /// <summary>
-        /// Returns a hash code.
+        /// Serves as the default hash function.
         /// </summary>
-        public override readonly int GetHashCode() => HashCode.Combine(X, Y);
+        /// <returns>A hash code for the current object.</returns>
+        public override readonly int GetHashCode() => HashCode.Combine(X.GetHashCode(), Y.GetHashCode());
 
         /// <summary>
-        /// Translates this <see cref='Drawing.Point'/> by the specified amount.
+        /// Returns a string that represents the current object.
         /// </summary>
-        public void Offset(int dx, int dy)
-        {
-            unchecked
-            {
-                X += dx;
-                Y += dy;
-            }
-        }
-
-        /// <summary>
-        /// Translates this <see cref='Drawing.Point'/> by the specified amount.
-        /// </summary>
-        public void Offset(Point p) => Offset(p.X, p.Y);
-
-        /// <summary>
-        /// Converts this <see cref='Drawing.Point'/> to a human readable string.
-        /// </summary>
-        public override readonly string ToString() => $"{{X={X},Y={Y}}}";
-
-        private static short HighInt16(int n) => unchecked((short)((n >> 16) & 0xffff));
-
-        private static short LowInt16(int n) => unchecked((short)(n & 0xffff));
+        /// <returns>A string that represents the current object.</returns>
+        public override readonly string ToString() => $"{{X={x}, Y={y}}}";
     }
 }

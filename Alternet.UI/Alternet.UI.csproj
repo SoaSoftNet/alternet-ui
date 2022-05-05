@@ -30,7 +30,7 @@
     <DefineConstants>$(DefineConstants);FEATURE_WINDOWS_SYSTEM_COLORS</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::IsOsPlatform('Windows'))">
-    <TargetFrameworks>net45;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net461;netcoreapp3.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition="!$([MSBuild]::IsOsPlatform('Windows'))">
     <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
@@ -51,7 +51,9 @@
   </PropertyGroup> -->
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="System.IO.Packaging" Version="6.0.0" />
     <PackageReference Include="Nullable" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -61,7 +63,7 @@
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Alternet.UI.Pal" Version="0.1.91-beta">
+    <PackageReference Include="Alternet.UI.Pal" Version="0.1.104-beta">
       <PrivateAssets>None</PrivateAssets>
     </PackageReference>
   </ItemGroup>
@@ -84,5 +86,16 @@
   <ItemGroup Condition="'$(Configuration)'=='Release'">
     <None Include="..\Alternet.UI.Build.Tasks\bin\Release\netcoreapp3.1\Alternet.UI.Build.Tasks.dll" Visible="false" Pack="True" PackagePath="tools\netcoreapp3.1" />
     <None Include="..\Alternet.UI.Build.Tasks\bin\Release\net46\Alternet.UI.Build.Tasks.dll" Visible="false" Pack="True" PackagePath="tools\net46" />
+  </ItemGroup>
+  <ItemGroup Condition="$(DefineConstants.Contains(';NETFRAMEWORK'))">
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+  <ItemGroup Condition="$(DefineConstants.Contains(';NETCOREAPP'))">
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <Generator>MSBuild:_GenerateResxSource</Generator>
+    </EmbeddedResource>
   </ItemGroup>
 </Project>

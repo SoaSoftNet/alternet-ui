@@ -1,5 +1,3 @@
-using System;
-
 namespace Alternet.UI
 {
     /// <summary>
@@ -12,8 +10,8 @@ namespace Alternet.UI
         /// </summary>
         Vertical,
         /// <summary>
-        /// Stack layout should be vertically oriented.
+        /// Stack layout should be horizontally oriented.
         /// </summary>
-        Horizontal
+        Horizontal,
     }
 }
