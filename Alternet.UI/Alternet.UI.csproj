@@ -63,7 +63,7 @@
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Alternet.UI.Pal" Version="0.1.104-beta">
+    <PackageReference Include="Alternet.UI.Pal" Version="0.2.106-beta">
       <PrivateAssets>None</PrivateAssets>
     </PackageReference>
   </ItemGroup>
