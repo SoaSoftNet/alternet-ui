@@ -8,14 +8,14 @@
   </PropertyGroup>
   <!-- Assembly Information -->
   <PropertyGroup>
-    <AssemblyVersion>0.3.121.0</AssemblyVersion>
-    <FileVersion>0.3.121.0</FileVersion>
-    <InformationalVersion>0.3.121 (0.3 Beta build 121)</InformationalVersion>
+    <AssemblyVersion>0.3.122.0</AssemblyVersion>
+    <FileVersion>0.3.122.0</FileVersion>
+    <InformationalVersion>0.3.122 (0.3 Beta build 122)</InformationalVersion>
   </PropertyGroup>
   <!-- NuGet Specification -->
   <PropertyGroup>
-    <PackageVersion>0.3.121-beta</PackageVersion>
-    <Version>0.3.121-beta</Version>
+    <PackageVersion>0.3.122-beta</PackageVersion>
+    <Version>0.3.122-beta</Version>
     <Authors>AlterNET Software</Authors>
   </PropertyGroup>
 </Project>
