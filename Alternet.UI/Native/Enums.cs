@@ -183,6 +183,15 @@ namespace Alternet.UI.Native
         Toggled = 2,
     }
     
+    enum ModifierKeys
+    {
+        None = 0,
+        Alt = 1,
+        Control = 2,
+        Shift = 4,
+        Windows = 8,
+    }
+    
     enum ListBoxSelectionMode
     {
         Single = 0,
@@ -224,13 +233,26 @@ namespace Alternet.UI.Native
         Multiple = 1,
     }
     
-    enum WindowStartPosition
+    enum ModalResult
     {
-        SystemDefaultLocation = 0,
-        SystemDefaultBounds = 1,
-        Manual = 2,
-        CenterScreen = 3,
-        CenterOwner = 4,
+        None = 0,
+        Canceled = 1,
+        Accepted = 2,
+    }
+    
+    enum WindowStartLocation
+    {
+        Default = 0,
+        Manual = 1,
+        CenterScreen = 2,
+        CenterOwner = 3,
+    }
+    
+    enum WindowState
+    {
+        Normal = 0,
+        Minimized = 1,
+        Maximized = 2,
     }
     
 }

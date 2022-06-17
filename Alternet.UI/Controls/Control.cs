@@ -30,8 +30,6 @@ namespace Alternet.UI
         private bool enabled = true;
         private Control? parent;
 
-        internal override bool HasLogicalChildren => Children.Count > 0;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="Control"/> class.
         /// </summary>
@@ -39,6 +37,15 @@ namespace Alternet.UI
         {
             Children.ItemInserted += Children_ItemInserted;
             Children.ItemRemoved += Children_ItemRemoved;
+        }
+
+        /// <summary>
+        /// Gets or sets size of the <see cref="Control"/>'s client area, in device-independent units (1/96th inch per unit).
+        /// </summary>
+        public Size ClientSize
+        {
+            get => Handler.ClientSize;
+            set => Handler.ClientSize = value;
         }
 
         /// <summary>
@@ -179,6 +186,49 @@ namespace Alternet.UI
         }
 
         /// <summary>
+        /// Occurs when the control's size is changed.
+        /// </summary>
+        public event EventHandler? SizeChanged;
+
+        /// <summary>
+        /// Occurs when the control's location is changed.
+        /// </summary>
+        public event EventHandler? LocationChanged;
+
+        internal void RaiseSizeChanged(EventArgs e) => OnSizeChanged(e);
+
+        /// <summary>
+        /// Raises the <see cref="SizeChanged"/> event.
+        /// </summary>
+        /// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
+        protected virtual void OnSizeChanged(EventArgs e) => SizeChanged?.Invoke(this, e);
+
+        internal void RaiseLocationChanged(EventArgs e) => OnLocationChanged(e);
+
+        /// <summary>
+        /// Raises the <see cref="LocationChanged"/> event.
+        /// </summary>
+        /// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
+        protected virtual void OnLocationChanged(EventArgs e) => LocationChanged?.Invoke(this, e);
+
+        /// <summary>
+        /// Gets or sets the location of upper-left corner of the control, in device-independent units (1/96th inch per unit).
+        /// </summary>
+        /// <value>The position of the control's upper-left corner, in logical units (1/96th of an inch).</value>
+        public Point Location
+        {
+            get
+            {
+                return Bounds.Location;
+            }
+
+            set
+            {
+                Bounds = new Rect(value, Bounds.Size);
+            }
+        }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the control and all its child controls are displayed.
         /// </summary>
         /// <value><c>true</c> if the control and all its child controls are displayed; otherwise, <c>false</c>. The default is <c>true</c>.</value>
@@ -274,19 +324,20 @@ namespace Alternet.UI
         /// </remarks>
         [Content]
         public Collection<Control> Children { get; } = new Collection<Control>();
+        
+        /// <inheritdoc/>
+        public override IReadOnlyList<FrameworkElement> ContentElements => Children;
 
         /// <summary>
         /// Gets the parent container of the control.
         /// </summary>
-        public new Control? Parent
+        public Control? Parent
         {
             get => parent;
             internal set
             {
-                var oldParent = parent;
                 parent = value;
-                base.Parent = value;
-                base.ChangeLogicalParent(oldParent, parent);
+                base.LogicalParent = value;
             }
         } // todo: allow users to set the Parent property?
 
@@ -509,7 +560,7 @@ namespace Alternet.UI
         /// See <see cref="Click"/> event description for more details.
         /// </summary>
         /// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
-        public void RaiseClick(EventArgs e)
+        public virtual void RaiseClick(EventArgs e)
         {
             if (e == null)
                 throw new ArgumentNullException(nameof(e));
@@ -894,8 +945,9 @@ namespace Alternet.UI
                     Handler.VisualChildren.Clear();
                     ResumeLayout(performLayout: false);
 
-                    foreach (var child in children)
-                        child.Dispose();
+                    // TODO
+                    //foreach (var child in children)
+                    //    child.Dispose();
 
                     DetachHandler();
                 }

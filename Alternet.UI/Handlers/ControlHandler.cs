@@ -59,8 +59,14 @@ namespace Alternet.UI
                 else
                     bounds = value;
 
+                if (oldBounds.Location != value.Location)
+                    Control.RaiseLocationChanged(EventArgs.Empty);
+
+                if (oldBounds.Size != value.Size)
+                    Control.RaiseSizeChanged(EventArgs.Empty);
+
                 if (oldBounds != Bounds)
-                    PerformLayout(); // todo: use event
+                    PerformLayout();
             }
         }
 
@@ -174,6 +180,8 @@ namespace Alternet.UI
                 return nativeControl;
             }
         }
+
+        internal bool NativeControlCreated => nativeControl != null;
 
         internal static ControlHandler? TryGetHandlerByNativeControl(Native.Control control) =>
             handlersByNativeControls.TryGetValue(control, out var handler) ? handler : null;
@@ -726,10 +734,29 @@ namespace Alternet.UI
         {
             if (nativeControl != null)
             {
-                handlersByNativeControls.Remove(nativeControl);
-                nativeControl.Dispose();
+                if (nativeControl.HasWindowCreated)
+                {
+                    nativeControl.Destroyed += NativeControl_Destroyed;
+                    nativeControl.Destroy();
+                }
+                else
+                    DisposeNativeControlCore(nativeControl);
+
                 nativeControl = null;
             }
+        }
+
+        private void NativeControl_Destroyed(object? sender, EventArgs e)
+        {
+            var nativeControl = (Native.Control)sender!;
+            nativeControl.Destroyed -= NativeControl_Destroyed;
+            DisposeNativeControlCore(nativeControl);
+        }
+
+        private static void DisposeNativeControlCore(Native.Control nativeControl)
+        {
+            handlersByNativeControls.Remove(nativeControl);
+            nativeControl.Dispose();
         }
 
         private void Control_BorderBrushChanged(object? sender, EventArgs? e)
@@ -820,6 +847,8 @@ namespace Alternet.UI
         /// </summary>
         protected internal virtual void BeginInit()
         {
+            if (NativeControl != null)
+                NativeControl.BeginInit();
         }
 
         /// <summary>
@@ -827,6 +856,8 @@ namespace Alternet.UI
         /// </summary>
         protected internal virtual void EndInit()
         {
+            if (NativeControl != null)
+                NativeControl.EndInit();
         }
 
         private void ApplyBorderColor()

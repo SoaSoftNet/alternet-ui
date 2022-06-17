@@ -190,6 +190,18 @@ namespace Alternet.UI.Native
             
         }
         
+        public bool HasWindowCreated
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.Control_GetHasWindowCreated_(NativePointer);
+                var m = n;
+                return m;
+            }
+            
+        }
+        
         public Alternet.Drawing.Color BackgroundColor
         {
             get
@@ -362,6 +374,24 @@ namespace Alternet.UI.Native
             return m;
         }
         
+        public void BeginInit()
+        {
+            CheckDisposed();
+            NativeApi.Control_BeginInit_(NativePointer);
+        }
+        
+        public void EndInit()
+        {
+            CheckDisposed();
+            NativeApi.Control_EndInit_(NativePointer);
+        }
+        
+        public void Destroy()
+        {
+            CheckDisposed();
+            NativeApi.Control_Destroy_(NativePointer);
+        }
+        
         static GCHandle eventCallbackGCHandle;
         
         static void SetEventCallback()
@@ -408,6 +438,10 @@ namespace Alternet.UI.Native
                 {
                     MouseCaptureLost?.Invoke(this, EventArgs.Empty); return IntPtr.Zero;
                 }
+                case NativeApi.ControlEvent.Destroyed:
+                {
+                    Destroyed?.Invoke(this, EventArgs.Empty); return IntPtr.Zero;
+                }
                 default: throw new Exception("Unexpected ControlEvent value: " + e);
             }
         }
@@ -418,6 +452,7 @@ namespace Alternet.UI.Native
         public event EventHandler? MouseClick;
         public event EventHandler? VisibleChanged;
         public event EventHandler? MouseCaptureLost;
+        public event EventHandler? Destroyed;
         
         [SuppressUnmanagedCodeSecurity]
         private class NativeApi : NativeApiProvider
@@ -435,6 +470,7 @@ namespace Alternet.UI.Native
                 MouseClick,
                 VisibleChanged,
                 MouseCaptureLost,
+                Destroyed,
             }
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
@@ -493,6 +529,9 @@ namespace Alternet.UI.Native
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern bool Control_GetIsMouseOver_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern bool Control_GetHasWindowCreated_(IntPtr obj);
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern NativeApiTypes.Color Control_GetBackgroundColor_(IntPtr obj);
@@ -559,6 +598,15 @@ namespace Alternet.UI.Native
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern bool Control_Focus_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Control_BeginInit_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Control_EndInit_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Control_Destroy_(IntPtr obj);
             
         }
     }
