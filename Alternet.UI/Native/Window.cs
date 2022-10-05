@@ -414,12 +414,13 @@ namespace Alternet.UI.Native
             if (!eventCallbackGCHandle.IsAllocated)
             {
                 var sink = new NativeApi.WindowEventCallbackType((obj, e, parameter) =>
+                UI.Application.HandleThreadExceptions(() =>
                 {
                     var w = NativeObject.GetFromNativePointer<Window>(obj, p => new Window(p));
                     if (w == null) return IntPtr.Zero;
                     return w.OnEvent(e, parameter);
                 }
-                );
+                ));
                 eventCallbackGCHandle = GCHandle.Alloc(sink);
                 NativeApi.Window_SetEventCallback_(sink);
             }
@@ -460,7 +461,7 @@ namespace Alternet.UI.Native
                 case NativeApi.WindowEvent.InputBindingCommandExecuted:
                 {
                     var ea = new NativeEventArgs<CommandEventData>(MarshalEx.PtrToStructure<CommandEventData>(parameter));
-                    InputBindingCommandExecuted?.Invoke(this, ea); return ea.Handled ? new IntPtr(1) : IntPtr.Zero;
+                    InputBindingCommandExecuted?.Invoke(this, ea); return ea.Result;
                 }
                 default: throw new Exception("Unexpected WindowEvent value: " + e);
             }

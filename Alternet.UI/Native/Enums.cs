@@ -2,6 +2,27 @@
 
 namespace Alternet.UI.Native
 {
+    enum FileDialogMode
+    {
+        Open = 0,
+        Save = 1,
+    }
+    
+    enum DragAction
+    {
+        Continue = 0,
+        Drop = 1,
+        Cancel = 2,
+    }
+    
+    enum DragDropEffects
+    {
+        None = 0,
+        Copy = 1,
+        Move = 2,
+        Link = 4,
+    }
+    
     enum BrushHatchStyle
     {
         BackwardDiagonal = 0,
@@ -210,6 +231,38 @@ namespace Alternet.UI.Native
         Details = 1,
         SmallIcon = 2,
         LargeIcon = 3,
+    }
+    
+    enum MessageBoxResult
+    {
+        OK = 0,
+        Cancel = 1,
+        Yes = 2,
+        No = 3,
+    }
+    
+    enum MessageBoxDefaultButton
+    {
+        OK = 0,
+        Cancel = 1,
+        Yes = 2,
+        No = 3,
+    }
+    
+    enum MessageBoxButtons
+    {
+        OK = 0,
+        OKCancel = 1,
+        YesNoCancel = 2,
+        YesNo = 3,
+    }
+    
+    enum MessageBoxIcon
+    {
+        None = 0,
+        Information = 1,
+        Warning = 2,
+        Error = 3,
     }
     
     enum MouseButton

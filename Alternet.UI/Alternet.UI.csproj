@@ -41,6 +41,12 @@
     <None Remove="build\**" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Application\ThreadException\Resources\ErrorImage.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Application\ThreadException\Resources\ErrorImage.png" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\Keys\Key.snk" Link="Key.snk" />
   </ItemGroup>
   <!-- Uncomment this to debug in release build. -->
@@ -59,7 +65,7 @@
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Alternet.UI.Pal" Version="0.3.122-beta">
+    <PackageReference Include="Alternet.UI.Pal" Version="0.4.144-beta">
       <PrivateAssets>None</PrivateAssets>
     </PackageReference>
   </ItemGroup>

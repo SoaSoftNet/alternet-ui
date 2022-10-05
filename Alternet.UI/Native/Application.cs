@@ -66,10 +66,78 @@ namespace Alternet.UI.Native
             
         }
         
+        public Clipboard Clipboard
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.Application_GetClipboard_(NativePointer);
+                var m = NativeObject.GetFromNativePointer<Clipboard>(n, p => new Clipboard(p))!;
+                ReleaseNativeObjectPointer(n);
+                return m;
+            }
+            
+        }
+        
+        public bool InUixmlPreviewerMode
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.Application_GetInUixmlPreviewerMode_(NativePointer);
+                var m = n;
+                return m;
+            }
+            
+            set
+            {
+                CheckDisposed();
+                NativeApi.Application_SetInUixmlPreviewerMode_(NativePointer, value);
+            }
+        }
+        
+        public bool InvokeRequired
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.Application_GetInvokeRequired_(NativePointer);
+                var m = n;
+                return m;
+            }
+            
+        }
+        
         public void Run(Window window)
         {
             CheckDisposed();
             NativeApi.Application_Run_(NativePointer, window.NativePointer);
+        }
+        
+        public void WakeUpIdle()
+        {
+            CheckDisposed();
+            NativeApi.Application_WakeUpIdle_(NativePointer);
+        }
+        
+        public void Exit()
+        {
+            CheckDisposed();
+            NativeApi.Application_Exit_(NativePointer);
+        }
+        
+        public void BeginInvoke(System.Action action)
+        {
+            CheckDisposed();
+            var actionCallbackHandle = new GCHandle();
+            var actionSink = new NativeApi.PInvokeCallbackActionType(
+                () =>
+                {
+                    action();
+                    actionCallbackHandle.Free();
+                });
+            actionCallbackHandle = GCHandle.Alloc(actionSink);
+            NativeApi.Application_BeginInvoke_(NativePointer, actionSink);
         }
         
         static GCHandle eventCallbackGCHandle;
@@ -79,12 +147,13 @@ namespace Alternet.UI.Native
             if (!eventCallbackGCHandle.IsAllocated)
             {
                 var sink = new NativeApi.ApplicationEventCallbackType((obj, e, parameter) =>
+                UI.Application.HandleThreadExceptions(() =>
                 {
                     var w = NativeObject.GetFromNativePointer<Application>(obj, p => new Application(p));
                     if (w == null) return IntPtr.Zero;
                     return w.OnEvent(e, parameter);
                 }
-                );
+                ));
                 eventCallbackGCHandle = GCHandle.Alloc(sink);
                 NativeApi.Application_SetEventCallback_(sink);
             }
@@ -136,7 +205,28 @@ namespace Alternet.UI.Native
             public static extern IntPtr Application_GetMouse_(IntPtr obj);
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr Application_GetClipboard_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern bool Application_GetInUixmlPreviewerMode_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Application_SetInUixmlPreviewerMode_(IntPtr obj, bool value);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern bool Application_GetInvokeRequired_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Application_Run_(IntPtr obj, IntPtr window);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Application_WakeUpIdle_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Application_Exit_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Application_BeginInvoke_(IntPtr obj, PInvokeCallbackActionType action);
             
         }
     }

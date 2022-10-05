@@ -35,6 +35,23 @@ namespace Alternet.UI.Native
             
         }
         
+        public bool AllowDrop
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.Control_GetAllowDrop_(NativePointer);
+                var m = n;
+                return m;
+            }
+            
+            set
+            {
+                CheckDisposed();
+                NativeApi.Control_SetAllowDrop_(NativePointer, value);
+            }
+        }
+        
         public Alternet.Drawing.Size Size
         {
             get
@@ -266,6 +283,18 @@ namespace Alternet.UI.Native
             
         }
         
+        public System.IntPtr Handle
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.Control_GetHandle_(NativePointer);
+                var m = n;
+                return m;
+            }
+            
+        }
+        
         public void SetMouseCapture(bool value)
         {
             CheckDisposed();
@@ -300,6 +329,14 @@ namespace Alternet.UI.Native
         {
             CheckDisposed();
             var n = NativeApi.Control_GetPreferredSize_(NativePointer, availableSize);
+            var m = n;
+            return m;
+        }
+        
+        public DragDropEffects DoDragDrop(UnmanagedDataObject data, DragDropEffects allowedEffects)
+        {
+            CheckDisposed();
+            var n = NativeApi.Control_DoDragDrop_(NativePointer, data.NativePointer, allowedEffects);
             var m = n;
             return m;
         }
@@ -392,6 +429,12 @@ namespace Alternet.UI.Native
             NativeApi.Control_Destroy_(NativePointer);
         }
         
+        public void SaveScreenshot(string fileName)
+        {
+            CheckDisposed();
+            NativeApi.Control_SaveScreenshot_(NativePointer, fileName);
+        }
+        
         static GCHandle eventCallbackGCHandle;
         
         static void SetEventCallback()
@@ -399,12 +442,13 @@ namespace Alternet.UI.Native
             if (!eventCallbackGCHandle.IsAllocated)
             {
                 var sink = new NativeApi.ControlEventCallbackType((obj, e, parameter) =>
+                UI.Application.HandleThreadExceptions(() =>
                 {
                     var w = NativeObject.GetFromNativePointer<Control>(obj, null);
                     if (w == null) return IntPtr.Zero;
                     return w.OnEvent(e, parameter);
                 }
-                );
+                ));
                 eventCallbackGCHandle = GCHandle.Alloc(sink);
                 NativeApi.Control_SetEventCallback_(sink);
             }
@@ -442,6 +486,25 @@ namespace Alternet.UI.Native
                 {
                     Destroyed?.Invoke(this, EventArgs.Empty); return IntPtr.Zero;
                 }
+                case NativeApi.ControlEvent.DragDrop:
+                {
+                    var ea = new NativeEventArgs<DragEventData>(MarshalEx.PtrToStructure<DragEventData>(parameter));
+                    DragDrop?.Invoke(this, ea); return ea.Result;
+                }
+                case NativeApi.ControlEvent.DragOver:
+                {
+                    var ea = new NativeEventArgs<DragEventData>(MarshalEx.PtrToStructure<DragEventData>(parameter));
+                    DragOver?.Invoke(this, ea); return ea.Result;
+                }
+                case NativeApi.ControlEvent.DragEnter:
+                {
+                    var ea = new NativeEventArgs<DragEventData>(MarshalEx.PtrToStructure<DragEventData>(parameter));
+                    DragEnter?.Invoke(this, ea); return ea.Result;
+                }
+                case NativeApi.ControlEvent.DragLeave:
+                {
+                    DragLeave?.Invoke(this, EventArgs.Empty); return IntPtr.Zero;
+                }
                 default: throw new Exception("Unexpected ControlEvent value: " + e);
             }
         }
@@ -453,6 +516,10 @@ namespace Alternet.UI.Native
         public event EventHandler? VisibleChanged;
         public event EventHandler? MouseCaptureLost;
         public event EventHandler? Destroyed;
+        public event NativeEventHandler<DragEventData>? DragDrop;
+        public event NativeEventHandler<DragEventData>? DragOver;
+        public event NativeEventHandler<DragEventData>? DragEnter;
+        public event EventHandler? DragLeave;
         
         [SuppressUnmanagedCodeSecurity]
         private class NativeApi : NativeApiProvider
@@ -471,6 +538,10 @@ namespace Alternet.UI.Native
                 VisibleChanged,
                 MouseCaptureLost,
                 Destroyed,
+                DragDrop,
+                DragOver,
+                DragEnter,
+                DragLeave,
             }
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
@@ -478,6 +549,12 @@ namespace Alternet.UI.Native
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern IntPtr Control_GetParentRefCounted_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern bool Control_GetAllowDrop_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Control_SetAllowDrop_(IntPtr obj, bool value);
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern NativeApiTypes.Size Control_GetSize_(IntPtr obj);
@@ -555,6 +632,9 @@ namespace Alternet.UI.Native
             public static extern bool Control_GetIsMouseCaptured_(IntPtr obj);
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern System.IntPtr Control_GetHandle_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Control_SetMouseCapture_(IntPtr obj, bool value);
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
@@ -571,6 +651,9 @@ namespace Alternet.UI.Native
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern NativeApiTypes.Size Control_GetPreferredSize_(IntPtr obj, NativeApiTypes.Size availableSize);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern DragDropEffects Control_DoDragDrop_(IntPtr obj, IntPtr data, DragDropEffects allowedEffects);
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern IntPtr Control_OpenPaintDrawingContext_(IntPtr obj);
@@ -607,6 +690,9 @@ namespace Alternet.UI.Native
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void Control_Destroy_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Control_SaveScreenshot_(IntPtr obj, string fileName);
             
         }
     }

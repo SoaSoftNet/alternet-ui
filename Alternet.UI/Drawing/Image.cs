@@ -1,3 +1,4 @@
+using Microsoft.SqlServer.Server;
 using System;
 using System.IO;
 
@@ -19,6 +20,15 @@ namespace Alternet.Drawing
         {
             using (var inputStream = new UI.Native.InputStream(stream))
                 NativeImage.LoadFromStream(inputStream);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Image"/> class with the specified size.
+        /// </summary>
+        /// <param name="size">The size used to create the image.</param>
+        public Image(Size size) : this()
+        {
+            NativeImage.Initialize(size);
         }
 
         private protected Image()
@@ -76,6 +86,35 @@ namespace Alternet.Drawing
 
                 isDisposed = true;
             }
+        }
+
+        /// <summary>
+        /// Saves this image to the specified stream in the specified format.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> where the image will be saved.</param>
+        /// <param name="format">An <see cref="ImageFormat"/> that specifies the format of the saved image.</param>
+        public void Save(Stream stream, ImageFormat format)
+        {
+            if (stream is null)
+                throw new ArgumentNullException(nameof(stream));
+
+            if (format is null)
+                throw new ArgumentNullException(nameof(format));
+
+            var outputStream = new UI.Native.OutputStream(stream);
+            NativeImage.SaveToStream(outputStream, format.ToString());
+        }
+
+        /// <summary>
+        /// Saves this <see cref="Image"/> to the specified file.
+        /// </summary>
+        /// <param name="fileName">A string that contains the name of the file to which to save this <see cref="Image"/>.</param>
+        public void Save(string fileName)
+        {
+            if (fileName is null)
+                throw new ArgumentNullException(nameof(fileName));
+
+            NativeImage.SaveToFile(fileName);
         }
     }
 }

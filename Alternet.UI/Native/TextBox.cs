@@ -57,6 +57,40 @@ namespace Alternet.UI.Native
             }
         }
         
+        public bool ReadOnly
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.TextBox_GetReadOnly_(NativePointer);
+                var m = n;
+                return m;
+            }
+            
+            set
+            {
+                CheckDisposed();
+                NativeApi.TextBox_SetReadOnly_(NativePointer, value);
+            }
+        }
+        
+        public bool Multiline
+        {
+            get
+            {
+                CheckDisposed();
+                var n = NativeApi.TextBox_GetMultiline_(NativePointer);
+                var m = n;
+                return m;
+            }
+            
+            set
+            {
+                CheckDisposed();
+                NativeApi.TextBox_SetMultiline_(NativePointer, value);
+            }
+        }
+        
         static GCHandle eventCallbackGCHandle;
         
         static void SetEventCallback()
@@ -64,12 +98,13 @@ namespace Alternet.UI.Native
             if (!eventCallbackGCHandle.IsAllocated)
             {
                 var sink = new NativeApi.TextBoxEventCallbackType((obj, e, parameter) =>
+                UI.Application.HandleThreadExceptions(() =>
                 {
                     var w = NativeObject.GetFromNativePointer<TextBox>(obj, p => new TextBox(p));
                     if (w == null) return IntPtr.Zero;
                     return w.OnEvent(e, parameter);
                 }
-                );
+                ));
                 eventCallbackGCHandle = GCHandle.Alloc(sink);
                 NativeApi.TextBox_SetEventCallback_(sink);
             }
@@ -119,6 +154,18 @@ namespace Alternet.UI.Native
             
             [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
             public static extern void TextBox_SetEditControlOnly_(IntPtr obj, bool value);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern bool TextBox_GetReadOnly_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void TextBox_SetReadOnly_(IntPtr obj, bool value);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern bool TextBox_GetMultiline_(IntPtr obj);
+            
+            [DllImport(NativeModuleName, CallingConvention = CallingConvention.Cdecl)]
+            public static extern void TextBox_SetMultiline_(IntPtr obj, bool value);
             
         }
     }

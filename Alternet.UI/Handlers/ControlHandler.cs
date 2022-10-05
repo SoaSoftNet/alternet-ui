@@ -87,6 +87,14 @@ namespace Alternet.UI
             }
         }
 
+        internal IntPtr GetHandle()
+        {
+            if (NativeControl == null)
+                throw new InvalidOperationException();
+
+            return NativeControl.Handle;
+        }
+
         /// <summary>
         /// Gets a rectangle which describes an area inside of the <see cref="Control"/> available
         /// for positioning (layout) of its child controls, in device-independent units (1/96th inch per unit).
@@ -538,6 +546,7 @@ namespace Alternet.UI
 
             Control.Children.ItemRemoved += Children_ItemRemoved;
             VisualChildren.ItemRemoved += Children_ItemRemoved;
+
         }
 
         private void Control_FontChanged(object? sender, EventArgs e)
@@ -574,6 +583,10 @@ namespace Alternet.UI
                 NativeControl.MouseEnter -= NativeControl_MouseEnter;
                 NativeControl.MouseLeave -= NativeControl_MouseLeave;
                 NativeControl.MouseCaptureLost -= NativeControl_MouseCaptureLost;
+                NativeControl.DragOver -= NativeControl_DragOver;
+                NativeControl.DragEnter -= NativeControl_DragEnter;
+                NativeControl.DragLeave -= NativeControl_DragLeave;
+                NativeControl.DragDrop -= NativeControl_DragDrop;
             }
         }
 
@@ -594,7 +607,35 @@ namespace Alternet.UI
             NativeControl.MouseEnter += NativeControl_MouseEnter;
             NativeControl.MouseLeave += NativeControl_MouseLeave;
             NativeControl.MouseCaptureLost += NativeControl_MouseCaptureLost;
+            NativeControl.DragOver += NativeControl_DragOver;
+            NativeControl.DragEnter += NativeControl_DragEnter;
+            NativeControl.DragLeave += NativeControl_DragLeave;
+            NativeControl.DragDrop += NativeControl_DragDrop;
         }
+
+        void RaiseDragAndDropEvent(Native.NativeEventArgs<Native.DragEventData> e, Action<DragEventArgs> raiseAction)
+        {
+            var data = e.Data;
+            var ea = new DragEventArgs(
+                new UnmanagedDataObjectAdapter(new Native.UnmanagedDataObject(data.data)),
+                new Point(data.mouseClientLocationX, data.mouseClientLocationY),
+                (DragDropEffects)data.effect);
+
+            raiseAction(ea);
+
+            e.Result = new IntPtr((int)ea.Effect);
+        }
+
+        private void NativeControl_DragOver(object? sender, Native.NativeEventArgs<Native.DragEventData> e) =>
+            RaiseDragAndDropEvent(e, ea => Control.RaiseDragOver(ea));
+
+        private void NativeControl_DragEnter(object? sender, Native.NativeEventArgs<Native.DragEventData> e) =>
+            RaiseDragAndDropEvent(e, ea => Control.RaiseDragEnter(ea));
+
+        private void NativeControl_DragDrop(object? sender, Native.NativeEventArgs<Native.DragEventData> e) =>
+            RaiseDragAndDropEvent(e, ea => Control.RaiseDragDrop(ea));
+
+        private void NativeControl_DragLeave(object? sender, EventArgs e) => Control.RaiseDragLeave(e);
 
         private void NativeControl_MouseCaptureLost(object? sender, EventArgs e)
         {
@@ -797,6 +838,35 @@ namespace Alternet.UI
         {
             get => NativeControl!.UserPaint;
             set => NativeControl!.UserPaint = value;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the control can accept data that the user drags onto it.
+        /// </summary>
+        /// <value><c>true</c> if drag-and-drop operations are allowed in the control; otherwise, <c>false</c>. The default is <c>false</c>.</value>
+        public bool AllowDrop
+        {
+            get => NativeControl!.AllowDrop;
+            set => NativeControl!.AllowDrop = value;
+        }
+
+        /// <summary>
+        /// Begins a drag-and-drop operation.
+        /// </summary>
+        /// <remarks>
+        /// Begins a drag operation. The <paramref name="allowedEffects"/> determine which drag operations can occur.
+        /// </remarks>
+        /// <param name="data">The data to drag.</param>
+        /// <param name="allowedEffects">One of the <see cref="DragDropEffects"/> values.</param>
+        /// <returns>
+        /// A value from the <see cref="DragDropEffects"/> enumeration that represents the final effect that was
+        /// performed during the drag-and-drop operation.
+        /// </returns>
+        public DragDropEffects DoDragDrop(object data, DragDropEffects allowedEffects)
+        {
+            return (DragDropEffects)NativeControl!.DoDragDrop(
+                UnmanagedDataObjectService.GetUnmanagedDataObject(data),
+                (Native.DragDropEffects)allowedEffects);
         }
 
         private Color GetBrushColor(Brush? brush)
@@ -1021,6 +1091,14 @@ namespace Alternet.UI
                 visualChild.Handler.PaintSelfAndVisualChildren(dc);
                 dc.Pop();
             }
+        }
+
+        internal void SaveScreenshot(string fileName)
+        {
+            if (NativeControl == null)
+                throw new InvalidOperationException();
+
+            NativeControl.SaveScreenshot(fileName);
         }
     }
 }
